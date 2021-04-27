@@ -25,18 +25,16 @@ pantalla = pygame.display.set_mode((800,600))
 
 gameOver= False
 
-#bola 1
-x = 400 #esto es la mitad (se podria poner con variables)
-y = 300
+bolas = []
+for _ in range (10):
+    bola = {'x':random.randint(0, ANCHO),
+    'y': random.randint(0, ALTURA),
+    'vx':random.randint(5,10),
+    'vy':random.randint(5,10),
+    'color': (random.randint(0,255), random.randint(0,255), random.randint(0,255))}
+    bolas.append(bola)
 
-vx = -7
-vy = -7
 
-#bola 2(la vamos a hacer de forma aleatoria)
-x2 = random.randint(0, 800)
-y2 = random.randint(0, 600)
-vx2 = random.randint(5,15)
-vy2 = random.randint (5,15)
 
 reloj = pygame.time.Clock()
 
@@ -47,24 +45,19 @@ while not gameOver:
         if evento.type == pygame.QUIT:
             gameOver = True
 
-    x += vx
-    y += vy
-    x2 += vx2
-    y2 += vy2
+    #modificacion de estados
 
-    vx *=rebotax(x)
-    vy *=rebotay(y)
-    vx2 *=rebotax(x2)
-    vy2 *=rebotay(y2)
+    for bola in bolas:
+        bola['x'] += bola['vx']
+        bola['y'] += bola['vy']
 
+        bola['vy'] *= rebotay(bola['y'])
+        bola['vx'] *= rebotay(bola['x'])
 
-
-
-    
-
+    #gestion de pantalla
     pantalla.fill (NEGRO)
-    pygame.draw.circle(pantalla, ROJO, (x, y), 10)
-    pygame.draw.circle(pantalla, VERDE, (x2, y2), 10)
+    for bola in bolas:
+        pygame.draw.circle(pantalla, bola['color'], (bola['x'], bola['y']), 10)
 
 
     pygame.display.flip()
