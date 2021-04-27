@@ -10,7 +10,7 @@ gameOver = False
 while not gameOver:
     #Gestion de eventos
     for evento in pygame.event.get():
-        if evento.type == pygame.QUIT():
+        if evento.type == pygame.QUIT:
             gameOver= True
     #Gestion del estado(actualizar las funciones)
     print('hola mundo')
