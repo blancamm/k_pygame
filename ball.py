@@ -26,7 +26,7 @@ pantalla = pygame.display.set_mode((800,600))
 gameOver= False
 
 class Bola():
-    def __init__(self, x, y, vx, vy, color):
+    def __init__(self, x, y, vx=5, vy=5, color=(255,255,255)): #ponemos algunos por defecto
         self.x = x
         self.y= y
         self.vx = vx
