@@ -9,29 +9,33 @@ NEGRO = (0,0,0)
 ANCHO = 800
 ALTURA = 600
 
-def rebotax(x):
-    if x <= 0 or x >= ANCHO:
-        return -1  #hay que poner en ambos un menos, porque pasamos de uno a otro(del anterior valor que se ha dado a la variable)
-    return 1
-
-def rebotay(y):
-    if y <= 0 or y >= ALTURA:
-        return -1   
-    return 1
-
 pygame.init()
 
-pantalla = pygame.display.set_mode((800,600))
+pantalla = pygame.display.set_mode((ANCHO,ALTURA))
 
 gameOver= False
 
 class Bola():
-    def __init__(self, x, y, vx=5, vy=5, color=(255,255,255)): #ponemos algunos por defecto
+    def __init__(self, x, y, vx=5, vy=5, color= (255, 255, 255), radio = 10): #ponemos algunos por defecto
         self.x = x
         self.y= y
         self.vx = vx
         self.vy = vy
         self.color = color
+        self.radio = radio
+
+    def actualizar(self):
+        self.x += self.vx
+        self.y += self.vy 
+
+        if self.x <= 0 or self.x >= 800:
+            self.vx = -self.vx
+
+        if self.y <= 0 or self.y >= 600:
+            self.vy = -self.vy
+
+    def dibujar(self, lienzo):
+        pygame.draw.circle(lienzo, self.color, (self.x, self.y), self.radio)
 
 bolas = []
 for _ in range (10):
@@ -56,16 +60,13 @@ while not gameOver:
     #modificacion de estados
 
     for bola in bolas:
-        bola.x += bola.vx
-        bola.y += bola.vy
-
-        bola.vy *= rebotay(bola.y)
-        bola.vx *= rebotay(bola.x)
+        bola.actualizar()
 
     #gestion de pantalla
     pantalla.fill (NEGRO)
     for bola in bolas:
-        pygame.draw.circle(pantalla, bola.color, (bola.x, bola.y), 10)
+        bola.dibujar(pantalla)
+        
 
 
     pygame.display.flip()
