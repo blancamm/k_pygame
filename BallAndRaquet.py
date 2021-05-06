@@ -184,8 +184,8 @@ while not gameOver and VIDAS > 0:
 while gameOver:
     final = marcador.fin()
     pantalla.blit(final[0], (300, 275))
-    pantalla.blit(final[1], (300, 350))
-    pantalla.blit(final[2], (525, 350))
+    pantalla.blit(final[1], (310, 350))
+    pantalla.blit(final[2], (520, 350))
     pygame.display.flip()
     pygame.time.delay(3500)
     pygame.quit()
