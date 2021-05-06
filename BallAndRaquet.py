@@ -109,9 +109,11 @@ class Marcador():
     def puntosyvidas(self):
         text_vidas = self.__fuente.render('VIDAS', True, BLANCO)
         vidas = self.__fuente.render(NumeroVidas, True, BLANCO)
-        text_puntos = self.__fuente.render('PUNTOS', True, BLANCO)
+        text_puntos = self.__fuente.render('PUNTOS    '+ NumeroPuntos, True, BLANCO) #se puede poner con un mas en vez de crear otro render con los puntos
+        '''
         puntos = self.__fuente.render(NumeroPuntos, True, BLANCO)
-        return [text_vidas, vidas, text_puntos, puntos]
+        '''
+        return [text_vidas, vidas, text_puntos]
 
     def fin(self):
         pantalla.fill (NEGRO)
@@ -146,7 +148,9 @@ def refrescar_pantalla():
         pantalla.blit(escribir[0], (50,20))
         pantalla.blit(escribir[1], (200, 20))
         pantalla.blit(escribir[2], (600, 20))
+        '''
         pantalla.blit(escribir[3], (800, 20))
+        '''
         pygame.display.flip()
 
 
