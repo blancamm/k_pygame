@@ -47,7 +47,6 @@ for _ in range (10):
     bolas.append(bola)
 
 
-
 reloj = pygame.time.Clock()
 
 while not gameOver:
