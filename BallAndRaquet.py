@@ -67,7 +67,7 @@ class Bola():
             global PUNTOS
             global NumeroPuntos
             PUNTOS += 5
-            NumeroPuntos = str(PUNTOS)
+            NumeroPuntos = str(PUNTOS) #tambien se podria hacer que devolviese true y en funcion de ese true, si es true se suma puntos en el marcador o algo asi
 
 
 class Raqueta():
@@ -119,7 +119,7 @@ class Marcador():
         fuente = pygame.font.SysFont('Elephant',36)
         texto_gameOver = fuente.render('GAME OVER', True, ROJO)
         fuentemini = pygame.font.SysFont('Elephant',24)
-        texto_puntuacion = fuentemini.render('PUNTUACION: ' +NumeroPuntos  , True, BLANCO)
+        texto_puntuacion = fuentemini.render('PUNTUACION: ' + NumeroPuntos  , True, BLANCO)
         return [texto_gameOver, texto_puntuacion]
             
 
