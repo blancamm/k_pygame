@@ -70,8 +70,6 @@ class Bola():
             NumeroPuntos = str(PUNTOS)
 
 
-
-
 class Raqueta():
     def __init__(self, ancho=150, alto= 25, x=0, y=0):
         self.ancho= ancho
@@ -93,6 +91,7 @@ class Raqueta():
         if teclas_pulsadas[pygame.K_RIGHT] and self.x < (ANCHO-self.ancho):   
             self.x += self.vx
 
+
 class Marcador():
     def __init__(self):
         self.__color = (123, 125, 125 )
@@ -109,7 +108,7 @@ class Marcador():
     def puntosyvidas(self):
         text_vidas = self.__fuente.render('VIDAS', True, BLANCO)
         vidas = self.__fuente.render(NumeroVidas, True, BLANCO)
-        text_puntos = self.__fuente.render('PUNTOS    '+ NumeroPuntos, True, BLANCO) #se puede poner con un mas en vez de crear otro render con los puntos
+        text_puntos = self.__fuente.render('PUNTOS    '+ NumeroPuntos, True, BLANCO) #se puede poner con un mas en vez de crear otro render con los puntos (lo mismo con las vidas)
         '''
         puntos = self.__fuente.render(NumeroPuntos, True, BLANCO)
         '''
@@ -120,9 +119,8 @@ class Marcador():
         fuente = pygame.font.SysFont('Elephant',36)
         texto_gameOver = fuente.render('GAME OVER', True, ROJO)
         fuentemini = pygame.font.SysFont('Elephant',24)
-        texto_puntuacion = fuentemini.render('PUNTUACION:', True, BLANCO)
-        texto_Puntos = fuentemini.render(NumeroPuntos, True, BLANCO)
-        return [texto_gameOver, texto_puntuacion, texto_Puntos]
+        texto_puntuacion = fuentemini.render('PUNTUACION: ' +NumeroPuntos  , True, BLANCO)
+        return [texto_gameOver, texto_puntuacion]
             
 
 
@@ -133,9 +131,6 @@ bola= Bola(random.randint(0, ANCHO),
                 random.randint(5,8)*random.choice([-1, 1]), 
                 (random.randint(0,255), random.randint(0,255), random.randint(0,255)))
 marcador = Marcador()
-
-pygame.init()
-
 
 pantalla = pygame.display.set_mode((ANCHO,ALTURA))
 
@@ -164,6 +159,8 @@ while not gameOver and VIDAS > 0:
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             gameOver = True
+            pygame.quit()
+            sys.exit()
 
         
     #modificacion de estados
@@ -177,6 +174,13 @@ while not gameOver and VIDAS > 0:
 
         if VIDAS == 0:
             gameOver = True
+            final = marcador.fin()
+            pantalla.blit(final[0], (300, 275))
+            pantalla.blit(final[1], (310, 350))
+            pygame.display.flip()
+            pygame.time.delay(3250)
+            pygame.quit()
+            sys.exit()
 
         pygame.time.delay(1000)
             
@@ -185,13 +189,6 @@ while not gameOver and VIDAS > 0:
     #gestion de pantalla
     refrescar_pantalla()
 
-while gameOver:
-    final = marcador.fin()
-    pantalla.blit(final[0], (300, 275))
-    pantalla.blit(final[1], (310, 350))
-    pantalla.blit(final[2], (520, 350))
-    pygame.display.flip()
-    pygame.time.delay(3500)
-    pygame.quit()
-    sys.exit()
+
+
 
