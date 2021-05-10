@@ -1,38 +1,110 @@
 import pygame as pg
 import sys
 from random import randint, choice
+from enum import Enum
 
 ANCHO = 800
 ALTO = 600
 FPS = 60
 
+'''
+
+UN TIPO DE MARCADOR
+
 class Marcador(pg.sprite.Sprite):
-    def __init__(self, x, y ,fontsize = 25, color = (255,255,255)):
+
+    class Justificado(Enum):
+        izquierda = 'I'
+        derecha = 'D'
+        centrado = 'C'
+    
+    def __init__(self, x, y , justificado = None, fontsize = 25, color = (255,255,255)):
         super().__init__() #porque viene del nombre super clase
         self.fuente = pg.font.SysFont('Arial', fontsize)
         self.text = 0
         self.color = color
-        self.image = self.fuente.render(str(self.text), True, self.color) #se llama imagen para que el draw lo entienda del render
-        self.rect = self.image.get_rect(topleft = (x, y)) #lo referencio segun donde quiero poner la esquina superior izquierda del rectangulo
+        self.x = x
+        self.y = y
 
+        if not justificado:
+            self.justificado= Marcador.Justificado.izquierda
+        else:
+            self.justificado = justificado
+
+        self.image = self.fuente.render(str(self.text), True, self.color) #se llama imagen para que el draw lo entienda del render
+        
+        if self.justificado == Marcador.Justificado.izquierda:
+            self.rect = self.image.get_rect(topleft = (x, y)) #lo referencio segun donde quiero poner la esquina superior izquierda del rectangulo
+        elif self.justificado == Marcador.Justificado.derecha:
+            self.rect = self.image.get_rect(topright =(x,y))
+        else:
+            self.rect = self.image.get_rect(midtop = (x,y))
 
     def update(self,dt): #necesario en los sprite para que se actualiza lo que te da el grupo
         self.image = self.fuente.render(str(self.text), True, self.color)
+        if self.justificado == Marcador.Justificado.izquierda:
+            self.rect = self.image.get_rect(topleft = (self.x, self.y)) #lo referencio segun donde quiero poner la esquina superior izquierda del rectangulo
+        elif self.justificado == Marcador.Justificado.derecha:
+            self.rect = self.image.get_rect(topright =(self.x, self.y))
+        else:
+            self.rect = self.image.get_rect(midtop = (self.x, self.y))
+
+'''
+class Marcador(pg.sprite.Sprite):
+    
+    def __init__(self, x, y , justificado = 'topleft', fontsize = 25, color = (255,255,255)):
+        super().__init__() #porque viene del nombre super clase
+        self.fuente = pg.font.SysFont('Arial', fontsize)
+        self.text = 0
+        self.color = color
+        self.x = x
+        self.y = y
+        self.justificado = justificado
+        self.image = self.fuente.render(str(self.text), True, self.color) #se llama imagen para que el draw lo entienda del render
+        
+       
+       
+    def update(self, dt):
+        self.image = self.fuente.render(str(self.text), True, self.color) #se llama imagen para que el draw lo entienda del render
+        #así cambio las posicion de distintas esquinas, segun lo que me interese topleft, o top rigth
+        d = {self.justificado: (self.x, self.y)}
+        self.rect = self.image.get_rect(**d)
+        
+
 
 class Bola(pg.sprite.Sprite): #va a heredar de la lcase sprite sus funcionalidades y atributos
+    
+    disfraces = ['ball1.png','ball2.png', 'ball3.png', 'ball4.png', 'ball5.png']
+
+    class Estado (Enum):
+        viva = 0
+        agoniazando = 1
+        muerta = 2
+
     def __init__(self, x, y):
         #pg.sprite.Sprite.__init__(self) - ESTA SERIA UNA FORMA
-        super().__init__()                  #ESTA ES LA OTRA FORMA
-        self.image = pg.image.load('./imagenes/ball1.png').convert_alpha()  #creo que es importante el nombre del atributo para que luego lo llame sprite
+        super().__init__()                #ESTA ES LA OTRA FORMA
+
+        self.imagenes = self.cargaImagenes()
+        self.imagen_actual = 0
+        self.image = self.imagenes[self.imagen_actual]
+
+        self.milisegundos_acumulados = 0
+        self.milisegundos_para_cambiar = 1000// FPS *10
+
         self.rect = self.image.get_rect(center = (x,y))                     #aqui ya no me tengo que preocupar de las dimensiones, lo tiene el propio objeto
                                                                             #lo de arriba es una instancia de la clase rectangulo
 
-
-        self.estoyViva = True
-
+        self.estado = Bola.Estado.viva #es un valor
 
         self.vx = randint(5,10)*choice([-1, 1])
         self.vy = randint(5,10)*choice([-1, 1])
+
+    def cargaImagenes(self):
+        imagenes = []
+        for fichero in self.disfraces:
+            imagenes.append(pg.image.load('./imagenes/{}'.format(fichero)))
+        return imagenes
 
     def prueba_colision(self, grupo):
         candidatos = pg.sprite.spritecollide(self, grupo, False) #false para no borrar la raqueta aunque la toque
@@ -40,7 +112,8 @@ class Bola(pg.sprite.Sprite): #va a heredar de la lcase sprite sus funcionalidad
             self.vy *=-1
 
     def update (self,dt):
-        if self.estoyViva:
+        if self.estado == Bola.Estado.viva:
+
             self.rect.x += self.vx
             self.rect.y += self.vy
 
@@ -51,12 +124,25 @@ class Bola(pg.sprite.Sprite): #va a heredar de la lcase sprite sus funcionalidad
                 self.vy *= -1
 
             if self.rect.bottom >= ALTO:
-                self.estoyViva = False
+                self.estado = Bola.Estado.agoniazando #porque queremos que salga la animacion
+                self.rect.bottom = ALTO #PARA QUE REBOTE
+
+        elif self.estado == Bola.Estado.agoniazando:
+            self.milisegundos_acumulados += dt
+            if self.milisegundos_acumulados >= self.milisegundos_para_cambiar:
+                self.imagen_actual += 1
+                self.milisegundos_acumulados = 0
+                if self.imagen_actual >= len(self.disfraces):
+                    self.estado = Bola.Estado.muerta
+                    self.imagen_actual = 0
+                self.image = self.imagenes[self.imagen_actual]
+
         else:
             self.rect.center = (ANCHO//2, ALTO//2)
             self.vx = randint(5,10)*choice([-1, 1])
             self.vy = randint(5,10)*choice([-1, 1])
-            self.estoyViva = True
+            self.estado = Bola.Estado.viva
+
 
 class Raqueta(pg.sprite.Sprite):
     fotos = ['electric00.png', 'electric01.png', 'electric02.png']
@@ -99,10 +185,12 @@ class Raqueta(pg.sprite.Sprite):
             self.milisegundos_acumulados = 0
         self.image = self.imagenes[self.imagen_actual]
 
+
 class Game():
     def __init__(self):
         self.pantalla = pg.display.set_mode((ANCHO, ALTO)) 
         self.vidas = 3
+    
 
         #SE CREA ESTOS GRUPOS PARA PODER HACER LA COLISION ENTRE ELLOS
 
@@ -113,7 +201,8 @@ class Game():
         self.TodoGroup = pg.sprite.Group ()
 
         self.cuentaSegundos = Marcador(10, 10)
-        self.TodoGroup.add(self.cuentaSegundos)
+        self.cuentaVidas = Marcador(790, 10, 'topright')
+        self.TodoGroup.add(self.cuentaSegundos, self.cuentaVidas) #se puede añadir con comas
 
         self.bola= Bola (randint(0, ANCHO), randint(0, ALTO))
         self.TodoGroup.add(self.bola) 
@@ -142,13 +231,13 @@ class Game():
                     game_Over= True
 
             self.cuentaSegundos.text = segundero
+            self.cuentaVidas.text = self.vidas
             self.bola.prueba_colision(self.grupoJugador)
 
             self.TodoGroup.update(dt)
 
-            if not self.bola.estoyViva:
+            if self.bola.estado == Bola.Estado.muerta:
                 self.vidas -= 1
-                print(self.vidas)
 
             self.pantalla.fill((0,0,0))
             
