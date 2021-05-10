@@ -50,7 +50,10 @@ class Marcador(pg.sprite.Sprite):
             self.rect = self.image.get_rect(midtop = (self.x, self.y))
 
 '''
+#OTRO TIPO DE MARCADOR(MAS SENCILLO Y BONITO)
+
 class Marcador(pg.sprite.Sprite):
+    plantilla = '{}'
     
     def __init__(self, x, y , justificado = 'topleft', fontsize = 25, color = (255,255,255)):
         super().__init__() #porque viene del nombre super clase
@@ -60,16 +63,55 @@ class Marcador(pg.sprite.Sprite):
         self.x = x
         self.y = y
         self.justificado = justificado
-        self.image = self.fuente.render(str(self.text), True, self.color) #se llama imagen para que el draw lo entienda del render
+        self.image = None
         
        
        
     def update(self, dt):
-        self.image = self.fuente.render(str(self.text), True, self.color) #se llama imagen para que el draw lo entienda del render
+        self.image = self.fuente.render(self.plantilla.format(self.text), True, self.color) #se llama imagen para que el draw lo entienda del render
         #así cambio las posicion de distintas esquinas, segun lo que me interese topleft, o top rigth
         d = {self.justificado: (self.x, self.y)}
         self.rect = self.image.get_rect(**d)
         
+class CuentaVidas(Marcador):
+    plantilla = 'Vidas: {}'
+
+class Ladrillo(pg.sprite.Sprite):
+    disfraces = ['greenTile.png', 'redTile.png', 'redTileBreak.png']
+
+    def __init__(self, x, y, esDuro = False):
+        super().__init__()
+        self.imagenes = self.cargaImagenes()
+        self.esDuro = esDuro
+        self.imagen_actual = 1 if self.esDuro else 0 #si es true la iamgen es 1 si es false que sea duro es la imagen 0, es decir, el ladrillo verde
+        self.image = self.imagenes[self.imagen_actual]
+        self.rect = self.image.get_rect(topleft= (x,y))
+        self.numGolpes = 0
+
+    def cargaImagenes(self):
+        imagenes = []
+        for fichero in self.disfraces:
+            imagenes.append(pg.image.load('./imagenes/{}'.format(fichero)))
+        return imagenes
+
+    def update(self,dt):
+        if self.esDuro and self.numGolpes == 1:
+            self.imagen_actual = 2
+            self.image = self.imagenes[self.imagen_actual]
+
+    def desaparece(self):
+        self.numGolpes +=1
+        return self.numGolpes > 0 and not self.esDuro or self.numGolpes >1 and self.esDuro
+
+        '''
+        ES DECIR:
+
+        if (self.numGolpes > 0 and not self.esDuro) or (self.numGolpes >1 and self.esDuro)
+            return True
+        else:
+            return False
+        '''
+
 
 
 class Bola(pg.sprite.Sprite): #va a heredar de la lcase sprite sus funcionalidades y atributos
@@ -97,8 +139,8 @@ class Bola(pg.sprite.Sprite): #va a heredar de la lcase sprite sus funcionalidad
 
         self.estado = Bola.Estado.viva #es un valor
 
-        self.vx = randint(5,10)*choice([-1, 1])
-        self.vy = randint(5,10)*choice([-1, 1])
+        self.vx = randint(5,8)*choice([-1, 1])
+        self.vy = randint(5,8)*choice([-1, 1])
 
     def cargaImagenes(self):
         imagenes = []
@@ -110,6 +152,7 @@ class Bola(pg.sprite.Sprite): #va a heredar de la lcase sprite sus funcionalidad
         candidatos = pg.sprite.spritecollide(self, grupo, False) #false para no borrar la raqueta aunque la toque
         if len(candidatos)>0 :
             self.vy *=-1
+        return candidatos
 
     def update (self,dt):
         if self.estado == Bola.Estado.viva:
@@ -190,6 +233,7 @@ class Game():
     def __init__(self):
         self.pantalla = pg.display.set_mode((ANCHO, ALTO)) 
         self.vidas = 3
+        self.puntuacion = 0
     
 
         #SE CREA ESTOS GRUPOS PARA PODER HACER LA COLISION ENTRE ELLOS
@@ -197,49 +241,61 @@ class Game():
         self.grupoJugador = pg.sprite.Group()
         #self.grupoPelota = pg.sprite.Group() DE MOMENTO NO ES NECESARIO
         self.grupoLadrillos = pg.sprite.Group()
+
+        for fila in range(4):
+            for columna in range(8):
+                x = columna * 100 + 5
+                y = fila *40 + 5
+                esDuro = randint(1,10) == 1 #si marca uno es true, si no es falso
+                ladrillo = Ladrillo(x,y, esDuro)
+                self.grupoLadrillos.add(ladrillo)
+                
         
         self.TodoGroup = pg.sprite.Group ()
 
-        self.cuentaSegundos = Marcador(10, 10)
-        self.cuentaVidas = Marcador(790, 10, 'topright')
-        self.TodoGroup.add(self.cuentaSegundos, self.cuentaVidas) #se puede añadir con comas
+        self.TodoGroup.add(self.grupoLadrillos)
+        self.cuentaPuntos = Marcador(10, 10, fontsize=50)
+        self.cuentaVidas = CuentaVidas(790, 10, 'topright', 50)
+        self.TodoGroup.add(self.cuentaPuntos, self.cuentaVidas) #se puede añadir con comas
 
         self.bola= Bola (randint(0, ANCHO), randint(0, ALTO))
         self.TodoGroup.add(self.bola) 
 
+        self.fondo = pg.image.load('./imagenes/background.png')
+
         self.raqueta = Raqueta(x = ANCHO//2, y=ALTO-30)
         self.grupoJugador.add(self.raqueta)
         self.TodoGroup.add(self.raqueta)
-
-
+        
       
     def bucle_principal(self):
         game_Over = False #es variable, no es atributo. No tiene sentido fuera de este metodo por eso solo es variable y no atributo
         reloj= pg.time.Clock()
-        contandor_milisegundos = 0
-        segundero = 0
+
         while not game_Over and self.vidas > 0:
             dt = reloj.tick(FPS)
-            contandor_milisegundos += dt
-
-            if contandor_milisegundos >= 1000: # es decir, un segundo
-                segundero += 1
-                contandor_milisegundos = 0 #vuelvo a inicializarlo a 0 para poder volver a contar otro segundo
 
             for evento in pg.event.get():
                 if evento.type == pg.QUIT:
                     game_Over= True
 
-            self.cuentaSegundos.text = segundero
-            self.cuentaVidas.text = self.vidas
+            self.cuentaPuntos.text = self.puntuacion #o se podria hacer con format
+            self.cuentaVidas.text =self.vidas
             self.bola.prueba_colision(self.grupoJugador)
+            tocados = self.bola.prueba_colision(self.grupoLadrillos)
+
+            for ladrillo in tocados:
+                self.puntuacion +=5
+                if ladrillo.desaparece():
+                    self.grupoLadrillos.remove(ladrillo)
+                    self.TodoGroup.remove(ladrillo)
 
             self.TodoGroup.update(dt)
 
             if self.bola.estado == Bola.Estado.muerta:
                 self.vidas -= 1
 
-            self.pantalla.fill((0,0,0))
+            self.pantalla.blit(self.fondo, (0,0))
             
             self.TodoGroup.draw(self.pantalla)
 
