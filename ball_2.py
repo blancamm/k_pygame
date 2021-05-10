@@ -6,16 +6,18 @@ ANCHO = 800
 ALTO = 600
 FPS = 60
 
-class Marcador():
+class Marcador(pg.sprite.Sprite):
     def __init__(self, x, y ,fontsize = 25, color = (255,255,255)):
+        super().__init__() #porque viene del nombre super clase
         self.fuente = pg.font.SysFont('Arial', fontsize)
+        self.text = 0
         self.color = color
-        self.x = x
-        self.y = y 
+        self.image = self.fuente.render(str(self.text), True, self.color) #se llama imagen para que el draw lo entienda del render
+        self.rect = self.image.get_rect(topleft = (x, y)) #lo referencio segun donde quiero poner la esquina superior izquierda del rectangulo
 
-    def dibuja(self, text, lienzo):
-        image = self.fuente.render(str(text), True, self.color) #te devuelve una surface con forma de rectangulo
-        lienzo.blit(image, (self.x, self.y))
+
+    def update(self): #necesario en los sprite para que se actualiza lo que te da el grupo
+        self.image = self.fuente.render(str(self.text), True, self.color)
 
 class Bola(pg.sprite.Sprite): #va a heredar de la lcase sprite sus funcionalidades y atributos
     def __init__(self, x, y):
@@ -39,35 +41,84 @@ class Bola(pg.sprite.Sprite): #va a heredar de la lcase sprite sus funcionalidad
         if self.rect.top <= 0 or self.rect.bottom >= ALTO: #esto son las distintas posiciones del objeto rectangulo
             self.vy *= -1
 
+class Raqueta(pg.sprite.Sprite):
+    fotos = ['electric00.png', 'electric01.png', 'electric02.png']
+
+    def __init__(self, x, y, w=100, h = 30):
+        super().__init__()
+        self.imagenes = self.cargaImagenes()
+        self.imagen_actual = 0 #actual como indice
+        self.image = self.imagenes[self.imagen_actual]
+        self.rect = self.image.get_rect(centerx = x, bottom = y)
+        self.vx = 7
+
+    def cargaImagenes(self):
+        imagenes = []
+        for fichero in self.fotos:
+            imagenes.append(pg.image.load('./imagenes/{}'.format(fichero)))
+        return imagenes
+
+    def update(self):
+        teclas_Pulsadas = pg.key.get_pressed()
+        if teclas_Pulsadas[pg.K_LEFT]:
+            self.rect.x -= self.vx
+        
+        if teclas_Pulsadas[pg.K_RIGHT]:
+            self.rect.x += self.vx
+
+        #los topes segun sus geometrias:
+        if self.rect.left <= 0:
+            self.rect.left = 0
+        if self.rect.right >= ANCHO:
+            self.rect.right = 0
+
+        self.imagen_actual += 1
+        if self.imagen_actual >= len(self.fotos):
+            self.imagen_actual = 0
+
+        self.image = self.imagenes[self.imagen_actual]
+
 class Game():
     def __init__(self):
         self.pantalla = pg.display.set_mode((ANCHO, ALTO)) 
-        self.vidas = 3
         self.botes = 0
-        self.cuentaGolpes = Marcador(10, 10)
+        
+        self.TodoGroup = pg.sprite.Group ()
 
+        self.cuentaSegundos = Marcador(10, 10)
+        self.TodoGroup.add(self.cuentaSegundos)
 
-        self.ballGroup = pg.sprite.Group ()
-        for i in range(randint(1,20)):
-           bola= Bola (randint(0, ANCHO), randint(0, ALTO))
-           self.ballGroup.add(bola) 
+        self.bola= Bola (randint(0, ANCHO), randint(0, ALTO))
+        self.TodoGroup.add(self.bola) 
+
+        self.raqueta = Raqueta(x = ANCHO//2, y=ALTO-30)
+        self.TodoGroup.add(self.raqueta)
+
 
       
     def bucle_principal(self):
         game_Over = False #es variable, no es atributo. No tiene sentido fuera de este metodo por eso solo es variable y no atributo
         reloj= pg.time.Clock()
+        contandor_milisegundos = 0
+        segundero = 0
         while not game_Over:
-            reloj.tick(FPS)
+            dt = reloj.tick(FPS)
+            contandor_milisegundos += dt
+
+            if contandor_milisegundos >= 1000: # es decir, un segundo
+                segundero += 1
+                contandor_milisegundos = 0 #vuelvo a inicializarlo a 0 para poder volver a contar otro segundo
 
             for evento in pg.event.get():
                 if evento.type == pg.QUIT:
                     game_Over= True
 
-            self.ballGroup.update()
+            self.cuentaSegundos.text = segundero
+            self.TodoGroup.update()
 
             self.pantalla.fill((0,0,0))
-            self.cuentaGolpes.dibuja('HOLA', self.pantalla)
-            self.ballGroup.draw(self.pantalla)
+            
+            self.TodoGroup.draw(self.pantalla)
 
 
             pg.display.flip()
