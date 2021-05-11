@@ -1,59 +1,11 @@
+from arkanoid import ANCHO, ALTO, FPS, levels
 import pygame as pg
-import sys
 from random import randint, choice
 from enum import Enum
 
-ANCHO = 800
-ALTO = 600
-FPS = 60
-
-
-'''
-
-UN TIPO DE MARCADOR
 
 class Marcador(pg.sprite.Sprite):
 
-    class Justificado(Enum):
-        izquierda = 'I'
-        derecha = 'D'
-        centrado = 'C'
-    
-    def __init__(self, x, y , justificado = None, fontsize = 25, color = (255,255,255)):
-        super().__init__() #porque viene del nombre super clase
-        self.fuente = pg.font.SysFont('Arial', fontsize)
-        self.text = 0
-        self.color = color
-        self.x = x
-        self.y = y
-
-        if not justificado:
-            self.justificado= Marcador.Justificado.izquierda
-        else:
-            self.justificado = justificado
-
-        self.image = self.fuente.render(str(self.text), True, self.color) #se llama imagen para que el draw lo entienda del render
-        
-        if self.justificado == Marcador.Justificado.izquierda:
-            self.rect = self.image.get_rect(topleft = (x, y)) #lo referencio segun donde quiero poner la esquina superior izquierda del rectangulo
-        elif self.justificado == Marcador.Justificado.derecha:
-            self.rect = self.image.get_rect(topright =(x,y))
-        else:
-            self.rect = self.image.get_rect(midtop = (x,y))
-
-    def update(self,dt): #necesario en los sprite para que se actualiza lo que te da el grupo
-        self.image = self.fuente.render(str(self.text), True, self.color)
-        if self.justificado == Marcador.Justificado.izquierda:
-            self.rect = self.image.get_rect(topleft = (self.x, self.y)) #lo referencio segun donde quiero poner la esquina superior izquierda del rectangulo
-        elif self.justificado == Marcador.Justificado.derecha:
-            self.rect = self.image.get_rect(topright =(self.x, self.y))
-        else:
-            self.rect = self.image.get_rect(midtop = (self.x, self.y))
-
-'''
-#OTRO TIPO DE MARCADOR(MAS SENCILLO Y BONITO)
-
-class Marcador(pg.sprite.Sprite):
     plantilla = '{}'
     
     def __init__(self, x, y , justificado = 'topleft', fontsize = 25, color = (255,255,255)):
@@ -73,10 +25,10 @@ class Marcador(pg.sprite.Sprite):
         #así cambio las posicion de distintas esquinas, segun lo que me interese topleft, o top rigth
         d = {self.justificado: (self.x, self.y)}
         self.rect = self.image.get_rect(**d)
-        
+
 class CuentaVidas(Marcador):
     plantilla = 'Vidas: {}'
-
+    
 class Ladrillo(pg.sprite.Sprite):
     disfraces = ['greenTile.png', 'redTile.png', 'redTileBreak.png']
 
@@ -112,7 +64,6 @@ class Ladrillo(pg.sprite.Sprite):
         else:
             return False
         '''
-
 
 class Bola(pg.sprite.Sprite): #va a heredar de la lcase sprite sus funcionalidades y atributos
     
@@ -186,7 +137,6 @@ class Bola(pg.sprite.Sprite): #va a heredar de la lcase sprite sus funcionalidad
             self.vy = randint(5,10)*choice([-1, 1])
             self.estado = Bola.Estado.viva
 
-
 class Raqueta(pg.sprite.Sprite):
     fotos = ['electric00.png', 'electric01.png', 'electric02.png']
 
@@ -227,117 +177,3 @@ class Raqueta(pg.sprite.Sprite):
                 self.imagen_actual = 0
             self.milisegundos_acumulados = 0
         self.image = self.imagenes[self.imagen_actual]
-
-levels = [ ['XXXXXXXX',
-        'X--DD--X', 
-        'X--DD--X', 
-        'XXXXXXXX'] ,
-        ['DDDDDDDD', 'DDDDDDDD',
-            'DDDDDDDD', 'DDDDDDDD']]
-
-
-class Game():
-    def __init__(self):
-        self.pantalla = pg.display.set_mode((ANCHO, ALTO)) 
-        self.vidas = 20
-        self.puntuacion = 0
-        self.level = 0
-
-    
-
-        #SE CREA ESTOS GRUPOS PARA PODER HACER LA COLISION ENTRE ELLOS
-
-        self.grupoJugador = pg.sprite.Group()
-        #self.grupoPelota = pg.sprite.Group() DE MOMENTO NO ES NECESARIO
-        self.grupoLadrillos = pg.sprite.Group()
-
-        self.disponer_ladrillos(levels[self.level])
-
-        '''
-        for fila in range(4):
-            for columna in range(8):
-                x = columna * 100 + 5
-                y = fila *40 + 5
-
-                esDuro = randint(1,10) == 1 #si marca uno es true, si no es falso
-                ladrillo = Ladrillo(x,y, esDuro)
-                self.grupoLadrillos.add(ladrillo)
-                '''
-
-        self.TodoGroup = pg.sprite.Group ()
-
-        self.TodoGroup.add(self.grupoLadrillos)
-        self.cuentaPuntos = Marcador(10, 10, fontsize=50)
-        self.cuentaVidas = CuentaVidas(790, 10, 'topright', 50)
-        self.TodoGroup.add(self.cuentaPuntos, self.cuentaVidas) #se puede añadir con comas
-
-        self.bola= Bola (randint(0, ANCHO), randint(0, ALTO))
-        self.TodoGroup.add(self.bola) 
-
-        self.fondo = pg.image.load('./imagenes/background.png')
-
-        self.raqueta = Raqueta(x = ANCHO//2, y=ALTO-30)
-        self.grupoJugador.add(self.raqueta)
-        self.TodoGroup.add(self.raqueta)
-
-    
-
-    def disponer_ladrillos(self, level):
-
-        for fila, cadena in enumerate(level):
-            contador = 0
-            for contador, caracter in enumerate(cadena):
-                x = 5 + (100 * contador)
-                y = 5 + (40 * fila)
-                if caracter in'XD':
-                    ladrillo = Ladrillo(x,y, caracter == 'D') #si el carcater es igual  D, te saldran D==D que es true, entonces te saldran un ladrillo duro
-                    self.grupoLadrillos.add(ladrillo)
-                    
-                contador += 1
-
- 
-    def bucle_principal(self):
-        game_Over = False #es variable, no es atributo. No tiene sentido fuera de este metodo por eso solo es variable y no atributo
-        reloj= pg.time.Clock()
-
-        while not game_Over and self.vidas > 0:
-            dt = reloj.tick(FPS)
-
-            for evento in pg.event.get():
-                if evento.type == pg.QUIT:
-                    game_Over= True
-
-            #self.disponer_ladrillos()
-            self.cuentaPuntos.text = self.puntuacion #o se podria hacer con format
-            self.cuentaVidas.text =self.vidas
-            self.bola.prueba_colision(self.grupoJugador)
-            tocados = self.bola.prueba_colision(self.grupoLadrillos)
-
-            for ladrillo in tocados:
-                self.puntuacion +=5
-                if ladrillo.desaparece():
-                    self.grupoLadrillos.remove(ladrillo)
-                    self.TodoGroup.remove(ladrillo)
-                    if len(self.grupoLadrillos) == 0:
-                        self.level += 1
-                        self.disponer_ladrillos(levels[self.level])
-                        self.TodoGroup.add(self.grupoLadrillos)
-
-            self.TodoGroup.update(dt)
-
-            if self.bola.estado == Bola.Estado.muerta:
-                self.vidas -= 1
-
-            self.pantalla.blit(self.fondo, (0,0))
-            
-            self.TodoGroup.draw(self.pantalla)
-
-
-            pg.display.flip()
-
-if __name__ == '__main__':
-    pg.init()
-    pg.font.init()
-    game = Game()
-    game.bucle_principal()
-
